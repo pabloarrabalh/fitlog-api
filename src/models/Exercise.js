@@ -4,19 +4,64 @@ const exerciseSchema = new mongoose.Schema(
   {
     name: {
       type: String,
-      required: [true, 'El nombre del ejercicio es obligatorio'],
+      required: true,
       trim: true,
-    },
-    muscleGroup: {
-      type: String,
-      required: [true, 'El grupo muscular es obligatorio'],
+      minlength: 2,
+      maxlength: 100,
+      index: true
     },
     description: {
       type: String,
-      default: '',
+      default: ''
     },
+    primaryMuscles: {
+      type: [String],
+      required: true,
+      validate: {
+        validator: (arr) => arr.length > 0,
+        message: 'At least one primary muscle is required'
+      }
+    },
+    secondaryMuscles: {
+      type: [String],
+      default: []
+    },
+    equipment: {
+      type: String,
+      enum: ['barbell', 'dumbbell', 'machine', 'cable', 'bodyweight', 'kettlebell', 'other'],
+      default: 'other'
+    },
+    movementPattern: {
+      type: String,
+      enum: ['push', 'pull', 'squat', 'hinge', 'carry', 'core', 'other'],
+      default: 'other'
+    },
+    difficulty: {
+      type: String,
+      enum: ['easy', 'moderate', 'hard'],
+      default: 'moderate'
+    },
+    substitutes: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Exercise'
+      }
+    ],
+    isPublic: {
+      type: Boolean,
+      default: true
+    },
+    createdBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      default: null
+    }
   },
-  { timestamps: true }
+  {
+    timestamps: true
+  }
 );
+
+exerciseSchema.index({ name: 'text', primaryMuscles: 'text', secondaryMuscles: 'text' });
 
 module.exports = mongoose.model('Exercise', exerciseSchema);

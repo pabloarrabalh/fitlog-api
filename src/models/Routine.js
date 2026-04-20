@@ -1,55 +1,91 @@
 const mongoose = require('mongoose');
 
+const routineExerciseSchema = new mongoose.Schema(
+  {
+    exercise: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Exercise',
+      required: true
+    },
+    order: {
+      type: Number,
+      required: true,
+      min: 1
+    },
+    targetSets: {
+      type: Number,
+      min: 1,
+      max: 20,
+      required: true
+    },
+    targetRepsMin: {
+      type: Number,
+      min: 1,
+      max: 50,
+      required: true
+    },
+    targetRepsMax: {
+      type: Number,
+      min: 1,
+      max: 50,
+      required: true
+    },
+    targetWeightKg: {
+      type: Number,
+      min: 0,
+      max: 700,
+      default: 0
+    },
+    restSeconds: {
+      type: Number,
+      min: 10,
+      max: 600,
+      default: 90
+    },
+    notes: {
+      type: String,
+      default: ''
+    }
+  },
+  { _id: true }
+);
+
 const routineSchema = new mongoose.Schema(
   {
     user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
-      required: [true, 'El usuario es obligatorio'],
+      required: true,
+      index: true
     },
     name: {
       type: String,
-      required: [true, 'El nombre de la rutina es obligatorio'],
+      required: true,
+      trim: true,
+      minlength: 2,
+      maxlength: 100
+    },
+    objective: {
+      type: String,
+      enum: ['strength', 'hypertrophy', 'endurance', 'recomposition'],
+      default: 'hypertrophy'
     },
     description: {
       type: String,
-      default: '',
+      default: ''
     },
-    exercises: [
-      {
-        exercise: {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: 'Exercise',
-          required: true,
-        },
-        sets: {
-          type: Number,
-          required: [true, 'El número de series es obligatorio'],
-          min: 1,
-        },
-        reps: {
-          type: Number,
-          required: [true, 'El número de repeticiones es obligatorio'],
-          min: 1,
-        },
-        weight: {
-          type: Number,
-          default: 0,
-          min: 0,
-        },
-        restSeconds: {
-          type: Number,
-          default: 60,
-          min: 0,
-        },
-      },
-    ],
-    isActive: {
+    exercises: {
+      type: [routineExerciseSchema],
+      default: []
+    },
+    isArchived: {
       type: Boolean,
-      default: true,
-    },
+      default: false
+    }
   },
-  { timestamps: true }
+  {
+    timestamps: true
+  }
 );
 
 module.exports = mongoose.model('Routine', routineSchema);

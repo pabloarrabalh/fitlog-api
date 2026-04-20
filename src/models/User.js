@@ -1,34 +1,70 @@
 const mongoose = require('mongoose');
+const bcrypt = require('bcryptjs');
 
 const userSchema = new mongoose.Schema(
   {
-    name: {
+    firstName: {
       type: String,
-      required: [true, 'El nombre es obligatorio'],
+      required: true,
       trim: true,
+      minlength: 2,
+      maxlength: 60
+    },
+    lastName: {
+      type: String,
+      required: true,
+      trim: true,
+      minlength: 2,
+      maxlength: 60
     },
     email: {
       type: String,
-      required: [true, 'El email es obligatorio'],
+      required: true,
       unique: true,
       lowercase: true,
-      match: [/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/, 'Email inválido'],
+      trim: true,
+      index: true
     },
     password: {
       type: String,
-      required: [true, 'La contraseña es obligatoria'],
-      minlength: 6,
+      required: true,
+      minlength: 8,
+      select: false
     },
-    weight: {
+    experience: {
+      type: String,
+      enum: ['beginner', 'intermediate', 'advanced'],
+      default: 'beginner'
+    },
+    objective: {
+      type: String,
+      enum: ['strength', 'hypertrophy', 'endurance', 'recomposition'],
+      default: 'hypertrophy'
+    },
+    bodyWeightKg: {
       type: Number,
-      default: null,
-    },
-    height: {
-      type: Number,
-      default: null,
-    },
+      min: 30,
+      max: 250,
+      default: null
+    }
   },
-  { timestamps: true }
+  {
+    timestamps: true
+  }
 );
+
+userSchema.methods.comparePassword = function comparePassword(plainPassword) {
+  return bcrypt.compare(plainPassword, this.password);
+};
+
+userSchema.pre('save', async function hashPassword(next) {
+  if (!this.isModified('password')) {
+    return next();
+  }
+
+  const saltRounds = 12;
+  this.password = await bcrypt.hash(this.password, saltRounds);
+  return next();
+});
 
 module.exports = mongoose.model('User', userSchema);

@@ -1,28 +1,31 @@
 require('dotenv').config();
 const express = require('express');
 const connectDB = require('./config/database');
+const routes = require('./routes');
 
 const app = express();
 
-// Middleware
 app.use(express.json());
 
 connectDB();
 
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'API funcionando correctamente' });
-});
-
-// TODO: Descomentar cuando esté implementado el CRUD
-// app.use('/api/users', require('./routes/userRoutes'));
-// app.use('/api/routines', require('./routes/routineRoutes'));
+app.use('/api', routes);
 
 app.use((err, req, res, next) => {
   console.error(err.stack);
-  res.status(500).json({ error: 'Algo salió mal en el servidor' });
+
+  const statusCode = err.statusCode || 500;
+  const message = err.message || 'Algo salió mal en el servidor';
+
+  res.status(statusCode).json({
+    success: false,
+    message
+  });
 });
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Servidor escuchando en puerto ${PORT}`);
 });
+
+module.exports = app;
