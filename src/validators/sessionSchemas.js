@@ -18,6 +18,7 @@ const adHocExerciseSchema = z
 
 const startSessionSchema = z
   .object({
+    user: z.string().min(1),
     routineId: z.string().optional(),
     objective: z.enum(['strength', 'hypertrophy', 'endurance', 'recomposition']).optional(),
     notes: z.string().max(500).optional(),

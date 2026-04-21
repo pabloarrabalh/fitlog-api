@@ -8,6 +8,24 @@ const exerciseQuerySchema = z.object({
   page: z.coerce.number().int().min(1).optional().default(1)
 });
 
+const exerciseBodySchema = z.object({
+  name: z.string().trim().min(2).max(100),
+  description: z.string().max(1000).optional().default(''),
+  primaryMuscles: z.array(z.string().min(1)).min(1),
+  secondaryMuscles: z.array(z.string().min(1)).optional().default([]),
+  equipment: z.enum(['barbell', 'dumbbell', 'machine', 'cable', 'bodyweight', 'kettlebell', 'other']).optional().default('other'),
+  movementPattern: z.enum(['push', 'pull', 'squat', 'hinge', 'carry', 'core', 'other']).optional().default('other'),
+  difficulty: z.enum(['easy', 'moderate', 'hard']).optional().default('moderate'),
+  substitutes: z.array(z.string().min(1)).optional().default([]),
+  isPublic: z.boolean().optional().default(true),
+  createdBy: z.string().min(1).nullable().optional().default(null)
+});
+
+const createExerciseSchema = exerciseBodySchema;
+const updateExerciseSchema = exerciseBodySchema.partial();
+
 module.exports = {
-  exerciseQuerySchema
+  exerciseQuerySchema,
+  createExerciseSchema,
+  updateExerciseSchema
 };
