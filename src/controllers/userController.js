@@ -2,17 +2,8 @@ const User = require('../models/User');
 const ApiError = require('../utils/ApiError');
 const asyncHandler = require('../utils/asyncHandler');
 
-const createUser = asyncHandler(async (req, res) => {
-  const user = await User.create(req.body);
-
-  res.status(201).json({
-    success: true,
-    data: user
-  });
-});
-
 const listUsers = asyncHandler(async (req, res) => {
-  const users = await User.find().sort({ createdAt: -1 });
+  const users = await User.find().sort({ createdAt: -1 }).select('firstName lastName email role experience objective bodyWeightKg friends createdAt updatedAt');
 
   res.status(200).json({
     success: true,
@@ -23,7 +14,27 @@ const listUsers = asyncHandler(async (req, res) => {
 const getUserById = asyncHandler(async (req, res) => {
   const { userId } = req.params;
 
-  const user = await User.findById(userId);
+  const user = await User.findById(userId).select('firstName lastName email role experience objective bodyWeightKg friends createdAt updatedAt');
+
+  if (!user) {
+    throw new ApiError(404, 'User not found');
+  }
+
+  const isSelf = String(user._id) === String(req.user._id);
+  const isFriend = Array.isArray(req.user.friends) && req.user.friends.some((friendId) => String(friendId) === String(user._id));
+
+  if (!isSelf && !isFriend) {
+    throw new ApiError(403, 'You can only view your own profile or friends profiles');
+  }
+
+  res.status(200).json({
+    success: true,
+    data: user
+  });
+});
+
+const getMe = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.user._id).select('firstName lastName email role experience objective bodyWeightKg friends createdAt updatedAt');
 
   if (!user) {
     throw new ApiError(404, 'User not found');
@@ -35,10 +46,8 @@ const getUserById = asyncHandler(async (req, res) => {
   });
 });
 
-const updateUser = asyncHandler(async (req, res) => {
-  const { userId } = req.params;
-
-  const user = await User.findById(userId);
+const updateMe = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.user._id);
 
   if (!user) {
     throw new ApiError(404, 'User not found');
@@ -53,10 +62,8 @@ const updateUser = asyncHandler(async (req, res) => {
   });
 });
 
-const deleteUser = asyncHandler(async (req, res) => {
-  const { userId } = req.params;
-
-  const user = await User.findByIdAndDelete(userId);
+const deleteMe = asyncHandler(async (req, res) => {
+  const user = await User.findByIdAndDelete(req.user._id);
 
   if (!user) {
     throw new ApiError(404, 'User not found');
@@ -69,9 +76,9 @@ const deleteUser = asyncHandler(async (req, res) => {
 });
 
 module.exports = {
-  createUser,
   listUsers,
   getUserById,
-  updateUser,
-  deleteUser
+  getMe,
+  updateMe,
+  deleteMe
 };

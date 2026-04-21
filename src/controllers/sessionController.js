@@ -5,12 +5,9 @@ const ApiError = require('../utils/ApiError');
 const asyncHandler = require('../utils/asyncHandler');
 
 const createSession = asyncHandler(async (req, res) => {
-  const { routineId, exercises = [], user, objective, notes } = req.body;
+  const { routineId, exercises = [], objective, notes } = req.body;
+  const userId = req.user._id;
   let sessionObjective = objective || 'hypertrophy';
-
-  if (!user) {
-    throw new ApiError(400, 'user is required');
-  }
 
   let entries = exercises;
 
@@ -19,7 +16,7 @@ const createSession = asyncHandler(async (req, res) => {
       throw new ApiError(400, 'Invalid routineId');
     }
 
-    const routine = await Routine.findById(routineId).populate('exercises.exercise', 'name primaryMuscles equipment');
+    const routine = await Routine.findOne({ _id: routineId, user: userId }).populate('exercises.exercise', 'name primaryMuscles equipment');
 
     if (!routine) {
       throw new ApiError(404, 'Routine not found');
@@ -46,7 +43,7 @@ const createSession = asyncHandler(async (req, res) => {
   }
 
   const session = await WorkoutSession.create({
-    user,
+    user: userId,
     routine: routineId || null,
     objective: sessionObjective,
     notes: notes || '',
@@ -61,14 +58,7 @@ const createSession = asyncHandler(async (req, res) => {
 });
 
 const listSessions = asyncHandler(async (req, res) => {
-  const { user } = req.query;
-  const filter = {};
-
-  if (user) {
-    filter.user = user;
-  }
-
-  const sessions = await WorkoutSession.find(filter)
+  const sessions = await WorkoutSession.find({ user: req.user._id })
     .sort({ startedAt: -1 })
     .populate('entries.exercise', 'name primaryMuscles')
     .populate('routine', 'name objective');
@@ -86,7 +76,7 @@ const getSessionById = asyncHandler(async (req, res) => {
     throw new ApiError(400, 'Invalid sessionId');
   }
 
-  const session = await WorkoutSession.findById(sessionId)
+  const session = await WorkoutSession.findOne({ _id: sessionId, user: req.user._id })
     .populate('entries.exercise', 'name primaryMuscles secondaryMuscles equipment')
     .populate('routine', 'name objective');
 
@@ -107,7 +97,7 @@ const updateSession = asyncHandler(async (req, res) => {
     throw new ApiError(400, 'Invalid sessionId');
   }
 
-  const session = await WorkoutSession.findByIdAndUpdate(sessionId, req.body, {
+  const session = await WorkoutSession.findOneAndUpdate({ _id: sessionId, user: req.user._id }, req.body, {
     new: true,
     runValidators: true
   });
@@ -129,7 +119,7 @@ const deleteSession = asyncHandler(async (req, res) => {
     throw new ApiError(400, 'Invalid sessionId');
   }
 
-  const session = await WorkoutSession.findByIdAndDelete(sessionId);
+  const session = await WorkoutSession.findOneAndDelete({ _id: sessionId, user: req.user._id });
 
   if (!session) {
     throw new ApiError(404, 'Session not found');
@@ -148,7 +138,7 @@ const addSetToEntry = asyncHandler(async (req, res) => {
     throw new ApiError(400, 'Invalid sessionId or entryId');
   }
 
-  const session = await WorkoutSession.findById(sessionId);
+  const session = await WorkoutSession.findOne({ _id: sessionId, user: req.user._id });
 
   if (!session) {
     throw new ApiError(404, 'Session not found');
@@ -175,7 +165,7 @@ const completeSession = asyncHandler(async (req, res) => {
     throw new ApiError(400, 'Invalid sessionId');
   }
 
-  const session = await WorkoutSession.findById(sessionId);
+  const session = await WorkoutSession.findOne({ _id: sessionId, user: req.user._id });
 
   if (!session) {
     throw new ApiError(404, 'Session not found');

@@ -4,7 +4,10 @@ const ApiError = require('../utils/ApiError');
 const asyncHandler = require('../utils/asyncHandler');
 
 const createRoutine = asyncHandler(async (req, res) => {
-  const routine = await Routine.create(req.body);
+  const routine = await Routine.create({
+    ...req.body,
+    user: req.user._id
+  });
 
   res.status(201).json({
     success: true,
@@ -13,14 +16,7 @@ const createRoutine = asyncHandler(async (req, res) => {
 });
 
 const listRoutines = asyncHandler(async (req, res) => {
-  const { user } = req.query;
-  const filter = {};
-
-  if (user) {
-    filter.user = user;
-  }
-
-  const routines = await Routine.find(filter)
+  const routines = await Routine.find({ user: req.user._id })
     .sort({ updatedAt: -1 })
     .populate('exercises.exercise', 'name primaryMuscles equipment');
 
@@ -37,7 +33,7 @@ const getRoutineById = asyncHandler(async (req, res) => {
     throw new ApiError(400, 'Invalid routineId');
   }
 
-  const routine = await Routine.findById(routineId).populate(
+  const routine = await Routine.findOne({ _id: routineId, user: req.user._id }).populate(
     'exercises.exercise',
     'name primaryMuscles secondaryMuscles equipment movementPattern'
   );
@@ -59,7 +55,7 @@ const updateRoutine = asyncHandler(async (req, res) => {
     throw new ApiError(400, 'Invalid routineId');
   }
 
-  const routine = await Routine.findByIdAndUpdate(routineId, req.body, {
+  const routine = await Routine.findOneAndUpdate({ _id: routineId, user: req.user._id }, req.body, {
     new: true,
     runValidators: true
   });
@@ -81,7 +77,7 @@ const deleteRoutine = asyncHandler(async (req, res) => {
     throw new ApiError(400, 'Invalid routineId');
   }
 
-  const routine = await Routine.findByIdAndDelete(routineId);
+  const routine = await Routine.findOneAndDelete({ _id: routineId, user: req.user._id });
 
   if (!routine) {
     throw new ApiError(404, 'Routine not found');

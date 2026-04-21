@@ -1,9 +1,12 @@
 const express = require('express');
 const sessionController = require('../controllers/sessionController');
+const authMiddleware = require('../middlewares/auth');
 const validate = require('../middlewares/validate');
 const { startSessionSchema, addSetSchema, completeSessionSchema } = require('../validators/sessionSchemas');
 
 const router = express.Router();
+
+router.use(authMiddleware);
 
 router.post('/', validate(startSessionSchema), sessionController.createSession);
 router.get('/', sessionController.listSessions);

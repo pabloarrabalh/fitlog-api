@@ -16,9 +16,8 @@ const exerciseBodySchema = z.object({
   equipment: z.enum(['barbell', 'dumbbell', 'machine', 'cable', 'bodyweight', 'kettlebell', 'other']).optional().default('other'),
   movementPattern: z.enum(['push', 'pull', 'squat', 'hinge', 'carry', 'core', 'other']).optional().default('other'),
   difficulty: z.enum(['easy', 'moderate', 'hard']).optional().default('moderate'),
-  substitutes: z.array(z.string().min(1)).optional().default([]),
-  isPublic: z.boolean().optional().default(true),
-  createdBy: z.string().min(1).nullable().optional().default(null)
+  visibility: z.enum(['public', 'private']).optional().default('public'),
+  substitutes: z.array(z.string().min(1)).optional().default([])
 });
 
 const createExerciseSchema = exerciseBodySchema;

@@ -24,6 +24,17 @@ const userSchema = new mongoose.Schema(
       trim: true,
       index: true
     },
+    password: {
+      type: String,
+      required: true,
+      minlength: 8,
+      select: false
+    },
+    role: {
+      type: String,
+      enum: ['user', 'admin'],
+      default: 'user'
+    },
     experience: {
       type: String,
       enum: ['beginner', 'intermediate', 'advanced'],
@@ -39,11 +50,34 @@ const userSchema = new mongoose.Schema(
       min: 30,
       max: 250,
       default: null
+    },
+    friends: {
+      type: [
+        {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: 'User'
+        }
+      ],
+      default: []
     }
   },
   {
     timestamps: true
   }
 );
+
+userSchema.methods.comparePassword = function comparePassword(plainPassword) {
+  return require('bcryptjs').compare(plainPassword, this.password);
+};
+
+userSchema.pre('save', async function hashPassword(next) {
+  if (!this.isModified('password')) {
+    return next();
+  }
+
+  const bcrypt = require('bcryptjs');
+  this.password = await bcrypt.hash(this.password, 12);
+  return next();
+});
 
 module.exports = mongoose.model('User', userSchema);

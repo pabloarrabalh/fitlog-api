@@ -17,7 +17,6 @@ const routineExerciseSchema = z
   });
 
 const createRoutineSchema = z.object({
-  user: z.string().min(1),
   name: z.string().trim().min(2).max(100),
   objective: z.enum(['strength', 'hypertrophy', 'endurance', 'recomposition']).optional(),
   description: z.string().max(400).optional(),
