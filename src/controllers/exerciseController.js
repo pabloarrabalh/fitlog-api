@@ -43,6 +43,10 @@ const createExercise = asyncHandler(async (req, res) => {
 const updateExercise = asyncHandler(async (req, res) => {
   const { exerciseId } = req.params;
 
+  if (!mongoose.isValidObjectId(exerciseId)) {
+    throw new ApiError(400, 'Invalid exerciseId');
+  }
+
   const exercise = await Exercise.findByIdAndUpdate(exerciseId, req.body, {
     new: true,
     runValidators: true
@@ -60,6 +64,10 @@ const updateExercise = asyncHandler(async (req, res) => {
 
 const deleteExercise = asyncHandler(async (req, res) => {
   const { exerciseId } = req.params;
+
+  if (!mongoose.isValidObjectId(exerciseId)) {
+    throw new ApiError(400, 'Invalid exerciseId');
+  }
 
   const exercise = await Exercise.findByIdAndDelete(exerciseId);
 

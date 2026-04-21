@@ -13,7 +13,16 @@ const createRoutine = asyncHandler(async (req, res) => {
 });
 
 const listRoutines = asyncHandler(async (req, res) => {
-  const routines = await Routine.find().sort({ updatedAt: -1 }).populate('exercises.exercise', 'name primaryMuscles equipment');
+  const { user } = req.query;
+  const filter = {};
+
+  if (user) {
+    filter.user = user;
+  }
+
+  const routines = await Routine.find(filter)
+    .sort({ updatedAt: -1 })
+    .populate('exercises.exercise', 'name primaryMuscles equipment');
 
   res.status(200).json({
     success: true,
