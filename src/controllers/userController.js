@@ -3,7 +3,7 @@ const ApiError = require('../utils/ApiError');
 const asyncHandler = require('../utils/asyncHandler');
 
 const listUsers = asyncHandler(async (req, res) => {
-  const users = await User.find().sort({ createdAt: -1 }).select('firstName lastName email role experience objective bodyWeightKg friends createdAt updatedAt');
+  const users = await User.find().sort({ createdAt: -1 }).select('username firstName lastName email profileCompleted role experience objective bodyWeightKg friends createdAt updatedAt');
 
   res.status(200).json({
     success: true,
@@ -14,7 +14,7 @@ const listUsers = asyncHandler(async (req, res) => {
 const getUserById = asyncHandler(async (req, res) => {
   const { userId } = req.params;
 
-  const user = await User.findById(userId).select('firstName lastName email role experience objective bodyWeightKg friends createdAt updatedAt');
+  const user = await User.findById(userId).select('username firstName lastName email profileCompleted role experience objective bodyWeightKg friends createdAt updatedAt');
 
   if (!user) {
     throw new ApiError(404, 'User not found');
@@ -34,7 +34,7 @@ const getUserById = asyncHandler(async (req, res) => {
 });
 
 const getMe = asyncHandler(async (req, res) => {
-  const user = await User.findById(req.user._id).select('firstName lastName email role experience objective bodyWeightKg friends createdAt updatedAt');
+  const user = await User.findById(req.user._id).select('username firstName lastName email profileCompleted role experience objective bodyWeightKg friends createdAt updatedAt');
 
   if (!user) {
     throw new ApiError(404, 'User not found');
@@ -54,6 +54,7 @@ const updateMe = asyncHandler(async (req, res) => {
   }
 
   Object.assign(user, req.body);
+  user.profileCompleted = Boolean(user.bodyWeightKg !== null && user.experience && user.objective);
   await user.save();
 
   res.status(200).json({

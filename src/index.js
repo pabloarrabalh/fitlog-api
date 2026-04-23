@@ -1,5 +1,6 @@
 require('dotenv').config();
 const express = require('express');
+const path = require('path');
 const connectDB = require('./config/database');
 const routes = require('./routes');
 const { notFoundHandler, errorHandler } = require('./middlewares/errorHandler');
@@ -9,21 +10,10 @@ const seedUsers = require('../scripts/seedUsers');
 const app = express();
 
 app.use(express.json());
+app.use(express.static(path.join(__dirname, '..', 'public')));
 
 app.get('/', (req, res) => {
-  res.status(200).json({
-    success: true,
-    message: 'Fitlog API is running',
-    endpoints: {
-      health: '/api/health',
-      exercises: '/api/exercises',
-      auth: '/api/auth',
-      users: '/api/users',
-      routines: '/api/routines',
-      sessions: '/api/sessions',
-      social: '/api/social'
-    }
-  });
+  res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
 });
 
 app.use('/api', routes);

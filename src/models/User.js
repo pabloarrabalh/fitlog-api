@@ -4,6 +4,7 @@ const userSchema = new mongoose.Schema(
   {
     username: {
       type: String,
+      required: true,
       trim: true,
       lowercase: true,
       unique: true,
@@ -36,7 +37,7 @@ const userSchema = new mongoose.Schema(
     password: {
       type: String,
       required: true,
-      minlength: 8,
+      minlength: 5,
       select: false
     },
     role: {
@@ -59,6 +60,10 @@ const userSchema = new mongoose.Schema(
       min: 30,
       max: 250,
       default: null
+    },
+    profileCompleted: {
+      type: Boolean,
+      default: false
     },
     friends: {
       type: [

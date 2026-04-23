@@ -5,14 +5,22 @@ const { signAccessToken } = require('../utils/jwt');
 
 const register = asyncHandler(async (req, res) => {
   const email = req.body.email.trim().toLowerCase();
+  const username = req.body.username.trim().toLowerCase();
   const existing = await User.findOne({ email });
   if (existing) {
     throw new ApiError(409, 'Email already in use');
   }
 
+  const usernameExists = await User.findOne({ username });
+  if (usernameExists) {
+    throw new ApiError(409, 'Username already in use');
+  }
+
   const user = await User.create({
     ...req.body,
-    email
+    username,
+    email,
+    profileCompleted: false
   });
   const token = signAccessToken({ sub: user._id.toString() });
 
@@ -26,6 +34,7 @@ const register = asyncHandler(async (req, res) => {
         firstName: user.firstName,
         lastName: user.lastName,
         email: user.email,
+        profileCompleted: user.profileCompleted,
         role: user.role,
         experience: user.experience,
         objective: user.objective,
@@ -66,6 +75,7 @@ const login = asyncHandler(async (req, res) => {
         firstName: user.firstName,
         lastName: user.lastName,
         email: user.email,
+        profileCompleted: user.profileCompleted,
         role: user.role,
         experience: user.experience,
         objective: user.objective,

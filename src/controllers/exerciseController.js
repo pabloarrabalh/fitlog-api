@@ -4,17 +4,9 @@ const ApiError = require('../utils/ApiError');
 const asyncHandler = require('../utils/asyncHandler');
 
 const listExercises = asyncHandler(async (req, res) => {
-  const filter = {
-    $or: [{ visibility: 'public', approvalStatus: 'approved' }]
-  };
-
-  if (req.user) {
-    if (req.user.role === 'admin') {
-      delete filter.$or;
-    } else {
-      filter.$or.push({ createdBy: req.user._id });
-    }
-  }
+  const filter = req.user && req.user.role === 'admin'
+    ? {}
+    : { visibility: 'public', approvalStatus: 'approved' };
 
   const items = await Exercise.find(filter).sort({ name: 1 });
 
@@ -136,7 +128,10 @@ const deleteExercise = asyncHandler(async (req, res) => {
 });
 
 const listMyExercises = asyncHandler(async (req, res) => {
-  const items = await Exercise.find({ createdBy: req.user._id }).sort({ createdAt: -1 });
+  const items = await Exercise.find({
+    createdBy: req.user._id,
+    approvalStatus: { $ne: 'rejected' }
+  }).sort({ createdAt: -1 });
 
   res.status(200).json({
     success: true,
@@ -192,15 +187,11 @@ const rejectExercise = asyncHandler(async (req, res) => {
     throw new ApiError(404, 'Exercise not found');
   }
 
-  exercise.approvalStatus = 'rejected';
-  exercise.reviewedBy = req.user._id;
-  exercise.reviewedAt = new Date();
-
-  const savedExercise = await exercise.save();
+  await exercise.deleteOne();
 
   res.status(200).json({
     success: true,
-    data: savedExercise
+    data: { deleted: true, exerciseId }
   });
 });
 
