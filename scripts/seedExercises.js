@@ -322,8 +322,13 @@ const exercises = [
 	}
 ];
 
-async function seedExercises() {
-	await connectDB();
+
+async function seedExercises(options = {}) {
+	const shouldCloseConnection = options.closeConnection === true;
+
+	if (mongoose.connection.readyState === 0) {
+		await connectDB();
+	}
 
 	const operations = exercises.map((exercise) => ({
 		updateOne: {
@@ -345,11 +350,18 @@ async function seedExercises() {
 	const result = await Exercise.bulkWrite(operations);
 
 	console.log(`Seed completado. Insertados o actualizados: ${result.upsertedCount + result.modifiedCount}`);
-	await mongoose.connection.close();
+
+	if (shouldCloseConnection) {
+		await mongoose.connection.close();
+	}
 }
 
-seedExercises().catch(async (error) => {
-	console.error('Error al ejecutar el seeder:', error);
-	await mongoose.connection.close();
-	process.exit(1);
-});
+if (require.main === module) {
+	seedExercises({ closeConnection: true }).catch(async (error) => {
+		console.error('Error al ejecutar el seeder:', error);
+		await mongoose.connection.close();
+		process.exit(1);
+	});
+}
+
+module.exports = seedExercises;

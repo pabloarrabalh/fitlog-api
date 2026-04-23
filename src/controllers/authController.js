@@ -22,6 +22,7 @@ const register = asyncHandler(async (req, res) => {
       token,
       user: {
         id: user._id,
+        username: user.username,
         firstName: user.firstName,
         lastName: user.lastName,
         email: user.email,
@@ -35,10 +36,15 @@ const register = asyncHandler(async (req, res) => {
 });
 
 const login = asyncHandler(async (req, res) => {
-  const email = req.body.email.trim().toLowerCase();
+  const identifier = req.body.email.trim().toLowerCase();
   const { password } = req.body;
 
-  const user = await User.findOne({ email }).select('+password');
+  const user = await User.findOne({
+    $or: [
+      { email: identifier },
+      { username: identifier }
+    ]
+  }).select('+password');
   if (!user) {
     throw new ApiError(401, 'Invalid credentials');
   }
@@ -56,6 +62,7 @@ const login = asyncHandler(async (req, res) => {
       token,
       user: {
         id: user._id,
+        username: user.username,
         firstName: user.firstName,
         lastName: user.lastName,
         email: user.email,

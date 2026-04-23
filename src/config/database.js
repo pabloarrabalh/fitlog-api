@@ -1,18 +1,18 @@
 const mongoose = require('mongoose');
 
 const connectDB = async () => {
+  const mongoUri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/fitlog';
+
   try {
-    const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/fitlog';
-    
     await mongoose.connect(mongoUri, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
+      serverSelectionTimeoutMS: 3000,
+      connectTimeoutMS: 3000
     });
-    
     console.log('MongoDB conectado exitosamente');
+    return true;
   } catch (error) {
-    console.error('Error al conectar MongoDB:', error.message);
-    process.exit(1);
+    console.error(`Error al conectar MongoDB en ${mongoUri}: ${error.message}`);
+    throw error;
   }
 };
 
