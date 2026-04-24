@@ -47,7 +47,17 @@ const routineExerciseSchema = new mongoose.Schema(
       default: ''
     }
   },
-  { _id: true }
+  {
+    virtuals: {
+    },
+    toJSON: {
+      virtuals: true,
+      transform: (doc, ret) => {
+        delete ret._id;
+        delete ret.__v;
+      },
+    }
+  }
 );
 
 const routineSchema = new mongoose.Schema(
@@ -84,7 +94,14 @@ const routineSchema = new mongoose.Schema(
     }
   },
   {
-    timestamps: true
+    timestamps: true,
+    toJSON: {
+      virtuals: true,
+      transform: (doc, ret) => {
+        delete ret._id;
+        delete ret.__v;
+      },
+    },
   }
 );
 

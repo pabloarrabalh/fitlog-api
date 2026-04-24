@@ -36,7 +36,15 @@ const performedSetSchema = new mongoose.Schema(
       default: true
     }
   },
-  { _id: true }
+  {
+    toJSON: {
+      virtuals: true,
+      transform: (doc, ret) => {
+        delete ret._id;
+        delete ret.__v;
+      },
+    },
+  }
 );
 
 const entrySchema = new mongoose.Schema(
@@ -100,7 +108,15 @@ const entrySchema = new mongoose.Schema(
       default: []
     }
   },
-  { _id: true }
+  {
+    toJSON: {
+      virtuals: true,
+      transform: (doc, ret) => {
+        delete ret._id;
+        delete ret.__v;
+      },
+    },
+  }
 );
 
 const workoutSessionSchema = new mongoose.Schema(
@@ -150,7 +166,14 @@ const workoutSessionSchema = new mongoose.Schema(
     }
   },
   {
-    timestamps: true
+    timestamps: true,
+    toJSON: {
+      virtuals: true,
+      transform: (doc, ret) => {
+        delete ret._id;
+        delete ret.__v;
+      },
+    },
   }
 );
 

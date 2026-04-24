@@ -76,7 +76,14 @@ const userSchema = new mongoose.Schema(
     }
   },
   {
-    timestamps: true
+    timestamps: true,
+    toJSON: {
+      virtuals: true,
+      transform: (doc, ret) => {
+        delete ret._id;
+        delete ret.__v;
+      },
+    },
   }
 );
 
