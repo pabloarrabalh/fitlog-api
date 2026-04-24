@@ -1,13 +1,12 @@
-const mongoose = require('mongoose');
-const Routine = require('../models/Routine');
-const ApiError = require('../utils/ApiError');
 const asyncHandler = require('../utils/asyncHandler');
+const routineService = require('../services/routineService');
+const { createRoutineSchema, updateRoutineSchema } = require('../validators/routineSchemas');
 
 const createRoutine = asyncHandler(async (req, res) => {
-  const routine = await Routine.create({
-    ...req.body,
-    user: req.user._id
-  });
+  // Validar y sanitizar datos con Zod
+  const cleanData = createRoutineSchema.parse(req.body);
+
+  const routine = await routineService.createRoutine(cleanData, req.user._id);
 
   res.status(201).json({
     success: true,
@@ -16,9 +15,7 @@ const createRoutine = asyncHandler(async (req, res) => {
 });
 
 const listRoutines = asyncHandler(async (req, res) => {
-  const routines = await Routine.find({ user: req.user._id })
-    .sort({ updatedAt: -1 })
-    .populate('exercises.exercise', 'name primaryMuscles equipment');
+  const routines = await routineService.listRoutines(req.user._id);
 
   res.status(200).json({
     success: true,
@@ -29,18 +26,7 @@ const listRoutines = asyncHandler(async (req, res) => {
 const getRoutineById = asyncHandler(async (req, res) => {
   const { routineId } = req.params;
 
-  if (!mongoose.isValidObjectId(routineId)) {
-    throw new ApiError(400, 'Invalid routineId');
-  }
-
-  const routine = await Routine.findOne({ _id: routineId, user: req.user._id }).populate(
-    'exercises.exercise',
-    'name primaryMuscles secondaryMuscles equipment movementPattern'
-  );
-
-  if (!routine) {
-    throw new ApiError(404, 'Routine not found');
-  }
+  const routine = await routineService.getRoutineById(routineId, req.user._id);
 
   res.status(200).json({
     success: true,
@@ -51,18 +37,10 @@ const getRoutineById = asyncHandler(async (req, res) => {
 const updateRoutine = asyncHandler(async (req, res) => {
   const { routineId } = req.params;
 
-  if (!mongoose.isValidObjectId(routineId)) {
-    throw new ApiError(400, 'Invalid routineId');
-  }
+  // Validar y sanitizar datos con Zod
+  const cleanData = updateRoutineSchema.parse(req.body);
 
-  const routine = await Routine.findOneAndUpdate({ _id: routineId, user: req.user._id }, req.body, {
-    new: true,
-    runValidators: true
-  });
-
-  if (!routine) {
-    throw new ApiError(404, 'Routine not found');
-  }
+  const routine = await routineService.updateRoutine(routineId, cleanData, req.user._id);
 
   res.status(200).json({
     success: true,
@@ -73,15 +51,7 @@ const updateRoutine = asyncHandler(async (req, res) => {
 const deleteRoutine = asyncHandler(async (req, res) => {
   const { routineId } = req.params;
 
-  if (!mongoose.isValidObjectId(routineId)) {
-    throw new ApiError(400, 'Invalid routineId');
-  }
-
-  const routine = await Routine.findOneAndDelete({ _id: routineId, user: req.user._id });
-
-  if (!routine) {
-    throw new ApiError(404, 'Routine not found');
-  }
+  const routine = await routineService.deleteRoutine(routineId, req.user._id);
 
   res.status(200).json({
     success: true,
