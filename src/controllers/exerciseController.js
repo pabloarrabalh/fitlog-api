@@ -1,14 +1,10 @@
-const mongoose = require('mongoose');
-const Exercise = require('../models/Exercise');
-const ApiError = require('../utils/ApiError');
 const asyncHandler = require('../utils/asyncHandler');
+const exerciseService = require('../services/exerciseService');
+const { createExerciseSchema, updateExerciseSchema } = require('../validators/exerciseSchemas');
 
 const listExercises = asyncHandler(async (req, res) => {
-  const filter = req.user && req.user.role === 'admin'
-    ? {}
-    : { visibility: 'public', approvalStatus: 'approved' };
-
-  const items = await Exercise.find(filter).sort({ name: 1 });
+  const userRole = req.user?.role || null;
+  const items = await exerciseService.listExercises(userRole);
 
   res.status(200).json({
     success: true,
@@ -18,24 +14,11 @@ const listExercises = asyncHandler(async (req, res) => {
 
 const getExerciseById = asyncHandler(async (req, res) => {
   const { exerciseId } = req.params;
-
-  if (!mongoose.isValidObjectId(exerciseId)) {
-    throw new ApiError(400, 'Invalid exerciseId');
-  }
-
-  const exercise = await Exercise.findById(exerciseId);
-
-  if (!exercise) {
-    throw new ApiError(404, 'Exercise not found');
-  }
-
-  const isOwner = req.user && exercise.createdBy && String(exercise.createdBy) === String(req.user._id);
-  const isAdmin = req.user && req.user.role === 'admin';
-  const isPublicApproved = exercise.visibility === 'public' && exercise.approvalStatus === 'approved';
-
-  if (!isPublicApproved && !isOwner && !isAdmin) {
-    throw new ApiError(404, 'Exercise not found');
-  }
+  const exercise = await exerciseService.getExerciseById(
+    exerciseId,
+    req.user?._id,
+    req.user?.role
+  );
 
   res.status(200).json({
     success: true,
@@ -44,17 +27,13 @@ const getExerciseById = asyncHandler(async (req, res) => {
 });
 
 const createExercise = asyncHandler(async (req, res) => {
-  const visibility = req.body.visibility || 'public';
-  const isAdmin = req.user.role === 'admin';
+  const cleanData = createExerciseSchema.parse(req.body);
 
-  const exercise = await Exercise.create({
-    ...req.body,
-    visibility,
-    approvalStatus: isAdmin || visibility === 'private' ? 'approved' : 'pending',
-    reviewedBy: isAdmin || visibility === 'private' ? req.user._id : null,
-    reviewedAt: isAdmin || visibility === 'private' ? new Date() : null,
-    createdBy: req.user._id
-  });
+  const exercise = await exerciseService.createExercise(
+    cleanData,
+    req.user._id,
+    req.user.role
+  );
 
   res.status(201).json({
     success: true,
@@ -64,34 +43,14 @@ const createExercise = asyncHandler(async (req, res) => {
 
 const updateExercise = asyncHandler(async (req, res) => {
   const { exerciseId } = req.params;
+  const cleanData = updateExerciseSchema.parse(req.body);
 
-  if (!mongoose.isValidObjectId(exerciseId)) {
-    throw new ApiError(400, 'Invalid exerciseId');
-  }
-
-  const exercise = await Exercise.findById(exerciseId);
-
-  if (!exercise) {
-    throw new ApiError(404, 'Exercise not found');
-  }
-
-  const isOwner = String(exercise.createdBy) === String(req.user._id);
-  const isAdmin = req.user.role === 'admin';
-
-  if (!isOwner && !isAdmin) {
-    throw new ApiError(403, 'You are not allowed to modify this exercise');
-  }
-
-  const nextVisibility = req.body.visibility || exercise.visibility;
-  Object.assign(exercise, req.body);
-
-  if (nextVisibility === 'public' && !isAdmin && exercise.approvalStatus !== 'approved') {
-    exercise.approvalStatus = 'pending';
-    exercise.reviewedBy = null;
-    exercise.reviewedAt = null;
-  }
-
-  const savedExercise = await exercise.save();
+  const savedExercise = await exerciseService.updateExercise(
+    exerciseId,
+    cleanData,
+    req.user._id,
+    req.user.role
+  );
 
   res.status(200).json({
     success: true,
@@ -101,25 +60,11 @@ const updateExercise = asyncHandler(async (req, res) => {
 
 const deleteExercise = asyncHandler(async (req, res) => {
   const { exerciseId } = req.params;
-
-  if (!mongoose.isValidObjectId(exerciseId)) {
-    throw new ApiError(400, 'Invalid exerciseId');
-  }
-
-  const exercise = await Exercise.findById(exerciseId);
-
-  if (!exercise) {
-    throw new ApiError(404, 'Exercise not found');
-  }
-
-  const isOwner = String(exercise.createdBy) === String(req.user._id);
-  const isAdmin = req.user.role === 'admin';
-
-  if (!isOwner && !isAdmin) {
-    throw new ApiError(403, 'You are not allowed to delete this exercise');
-  }
-
-  await exercise.deleteOne();
+  const exercise = await exerciseService.deleteExercise(
+    exerciseId,
+    req.user._id,
+    req.user.role
+  );
 
   res.status(200).json({
     success: true,
@@ -128,10 +73,7 @@ const deleteExercise = asyncHandler(async (req, res) => {
 });
 
 const listMyExercises = asyncHandler(async (req, res) => {
-  const items = await Exercise.find({
-    createdBy: req.user._id,
-    approvalStatus: { $ne: 'rejected' }
-  }).sort({ createdAt: -1 });
+  const items = await exerciseService.listMyExercises(req.user._id);
 
   res.status(200).json({
     success: true,
@@ -140,7 +82,7 @@ const listMyExercises = asyncHandler(async (req, res) => {
 });
 
 const listPendingExercises = asyncHandler(async (req, res) => {
-  const items = await Exercise.find({ visibility: 'public', approvalStatus: 'pending' }).sort({ createdAt: -1 });
+  const items = await exerciseService.listPendingExercises();
 
   res.status(200).json({
     success: true,
@@ -150,23 +92,7 @@ const listPendingExercises = asyncHandler(async (req, res) => {
 
 const approveExercise = asyncHandler(async (req, res) => {
   const { exerciseId } = req.params;
-
-  if (!mongoose.isValidObjectId(exerciseId)) {
-    throw new ApiError(400, 'Invalid exerciseId');
-  }
-
-  const exercise = await Exercise.findById(exerciseId);
-
-  if (!exercise) {
-    throw new ApiError(404, 'Exercise not found');
-  }
-
-  exercise.approvalStatus = 'approved';
-  exercise.visibility = 'public';
-  exercise.reviewedBy = req.user._id;
-  exercise.reviewedAt = new Date();
-
-  const savedExercise = await exercise.save();
+  const savedExercise = await exerciseService.approveExercise(exerciseId, req.user._id);
 
   res.status(200).json({
     success: true,
@@ -176,22 +102,11 @@ const approveExercise = asyncHandler(async (req, res) => {
 
 const rejectExercise = asyncHandler(async (req, res) => {
   const { exerciseId } = req.params;
-
-  if (!mongoose.isValidObjectId(exerciseId)) {
-    throw new ApiError(400, 'Invalid exerciseId');
-  }
-
-  const exercise = await Exercise.findById(exerciseId);
-
-  if (!exercise) {
-    throw new ApiError(404, 'Exercise not found');
-  }
-
-  await exercise.deleteOne();
+  const result = await exerciseService.rejectExercise(exerciseId);
 
   res.status(200).json({
     success: true,
-    data: { deleted: true, exerciseId }
+    data: result
   });
 });
 
