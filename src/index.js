@@ -8,10 +8,12 @@ const { notFoundHandler, errorHandler } = require('./middlewares/errorHandler');
 const seedExercises = require('../scripts/seedExercises');
 const seedUsers = require('../scripts/seedUsers');
 const openapiSpec = require('./docs/openapi');
+const cors = require('cors');
 
 const app = express();
 
 app.use(express.json());
+app.use(cors());
 app.use(express.static(path.join(__dirname, '..', 'public')));
 
 app.get('/api-docs.json', (req, res) => {
