@@ -1,2 +1,9 @@
-Doc de la memoria:
-https://docs.google.com/document/d/1nxFzES2Jo5aK6IYKdudNMB2tNpRHgERtk5zt9hR5iAw/edit?usp=sharing
+## Documentación API
+
+La API expone Swagger UI en:
+
+`/api-docs`
+
+También puedes descargar el OpenAPI JSON desde:
+
+`/api-docs.json`
