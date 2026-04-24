@@ -1,9 +1,9 @@
-const User = require('../models/User');
-const ApiError = require('../utils/ApiError');
 const asyncHandler = require('../utils/asyncHandler');
+const userService = require('../services/userService');
+const { updateProfileSchema, userIdSchema } = require('../validators/userSchemas');
 
 const listUsers = asyncHandler(async (req, res) => {
-  const users = await User.find().sort({ createdAt: -1 }).select('username firstName lastName email profileCompleted role experience objective bodyWeightKg friends createdAt updatedAt');
+  const users = await userService.listUsers();
 
   res.status(200).json({
     success: true,
@@ -14,18 +14,14 @@ const listUsers = asyncHandler(async (req, res) => {
 const getUserById = asyncHandler(async (req, res) => {
   const { userId } = req.params;
 
-  const user = await User.findById(userId).select('username firstName lastName email profileCompleted role experience objective bodyWeightKg friends createdAt updatedAt');
+  // Validar userId con Zod
+  const cleanData = userIdSchema.parse({ userId });
 
-  if (!user) {
-    throw new ApiError(404, 'User not found');
-  }
-
-  const isSelf = String(user._id) === String(req.user._id);
-  const isFriend = Array.isArray(req.user.friends) && req.user.friends.some((friendId) => String(friendId) === String(user._id));
-
-  if (!isSelf && !isFriend) {
-    throw new ApiError(403, 'You can only view your own profile or friends profiles');
-  }
+  const user = await userService.getUserById(
+    cleanData.userId,
+    req.user._id,
+    req.user.friends
+  );
 
   res.status(200).json({
     success: true,
@@ -34,11 +30,7 @@ const getUserById = asyncHandler(async (req, res) => {
 });
 
 const getMe = asyncHandler(async (req, res) => {
-  const user = await User.findById(req.user._id).select('username firstName lastName email profileCompleted role experience objective bodyWeightKg friends createdAt updatedAt');
-
-  if (!user) {
-    throw new ApiError(404, 'User not found');
-  }
+  const user = await userService.getMe(req.user._id);
 
   res.status(200).json({
     success: true,
@@ -47,15 +39,10 @@ const getMe = asyncHandler(async (req, res) => {
 });
 
 const updateMe = asyncHandler(async (req, res) => {
-  const user = await User.findById(req.user._id);
+  // Validar y sanitizar datos con Zod
+  const cleanData = updateProfileSchema.parse(req.body);
 
-  if (!user) {
-    throw new ApiError(404, 'User not found');
-  }
-
-  Object.assign(user, req.body);
-  user.profileCompleted = Boolean(user.bodyWeightKg !== null && user.experience && user.objective);
-  await user.save();
+  const user = await userService.updateMe(req.user._id, cleanData);
 
   res.status(200).json({
     success: true,
@@ -64,11 +51,7 @@ const updateMe = asyncHandler(async (req, res) => {
 });
 
 const deleteMe = asyncHandler(async (req, res) => {
-  const user = await User.findByIdAndDelete(req.user._id);
-
-  if (!user) {
-    throw new ApiError(404, 'User not found');
-  }
+  const user = await userService.deleteMe(req.user._id);
 
   res.status(200).json({
     success: true,

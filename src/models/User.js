@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const bcrypt = require('bcryptjs');
 
 const userSchema = new mongoose.Schema(
   {
@@ -82,23 +83,57 @@ const userSchema = new mongoose.Schema(
       transform: (doc, ret) => {
         delete ret._id;
         delete ret.__v;
+        delete ret.password;
+        return ret;
       },
     },
   }
 );
 
-userSchema.methods.comparePassword = function comparePassword(plainPassword) {
-  return require('bcryptjs').compare(plainPassword, this.password);
-};
-
+/**
+ * Encripta la contraseña antes de guardar (insert o update)
+ */
 userSchema.pre('save', async function hashPassword(next) {
   if (!this.isModified('password')) {
     return next();
   }
 
-  const bcrypt = require('bcryptjs');
   this.password = await bcrypt.hash(this.password, 12);
   return next();
 });
+
+/**
+ * Encripta la contraseña para operaciones de actualización atómicas
+ * Maneja: findOneAndUpdate, updateOne, updateMany, update
+ */
+userSchema.pre(['findOneAndUpdate', 'updateOne', 'updateMany', 'update'], async function (next) {
+  const update = this.getUpdate();
+  if (!update) return next();
+
+  if (update.password) {
+    update.password = await bcrypt.hash(update.password, 12);
+    this.setUpdate(update);
+  }
+  else if (update.$set && update.$set.password) {
+    update.$set.password = await bcrypt.hash(update.$set.password, 12);
+    this.setUpdate(update);
+  }
+
+  return next();
+});
+
+/**
+ * Compara contraseña en texto plano con hash almacenado
+ */
+userSchema.methods.comparePassword = function comparePassword(plainPassword) {
+  return bcrypt.compare(plainPassword, this.password);
+};
+
+/**
+ * Alias para comparePassword (nomenclatura alternativa)
+ */
+userSchema.methods.isCorrectPassword = function (plainPassword) {
+  return bcrypt.compare(plainPassword, this.password);
+};
 
 module.exports = mongoose.model('User', userSchema);
