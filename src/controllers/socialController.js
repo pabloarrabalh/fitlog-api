@@ -26,7 +26,7 @@ const listFriends = asyncHandler(async (req, res) => {
   res.status(200).json({
     success: true,
     data: me.friends.map(formatUser)
-  });
+  }); 
 });
 
 const addFriend = asyncHandler(async (req, res) => {

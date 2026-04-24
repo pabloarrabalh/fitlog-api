@@ -1,16 +1,29 @@
 require('dotenv').config();
 const express = require('express');
 const path = require('path');
+const swaggerUi = require('swagger-ui-express');
 const connectDB = require('./config/database');
 const routes = require('./routes');
 const { notFoundHandler, errorHandler } = require('./middlewares/errorHandler');
 const seedExercises = require('../scripts/seedExercises');
 const seedUsers = require('../scripts/seedUsers');
+const openapiSpec = require('./docs/openapi');
 
 const app = express();
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, '..', 'public')));
+
+app.get('/api-docs.json', (req, res) => {
+  res.json(openapiSpec);
+});
+
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(openapiSpec, {
+  swaggerOptions: {
+    docExpansion: 'none',
+    persistAuthorization: true
+  }
+}));
 
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
