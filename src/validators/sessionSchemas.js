@@ -28,6 +28,11 @@ const startSessionSchema = z
     path: ['routineId']
   });
 
+const updateSessionSchema = z.object({
+  notes: z.string().max(500).optional(),
+  objective: z.enum(['strength', 'hypertrophy', 'endurance', 'recomposition']).optional()
+});
+
 const addSetSchema = z.object({
   setNumber: z.number().int().min(1),
   reps: z.number().int().min(1).max(100),
@@ -43,6 +48,7 @@ const completeSessionSchema = z.object({
 
 module.exports = {
   startSessionSchema,
+  updateSessionSchema,
   addSetSchema,
   completeSessionSchema
 };
