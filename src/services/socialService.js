@@ -13,19 +13,6 @@ const validateObjectId = (id) => {
 };
 
 /**
- * Formatea un usuario para respuesta HTTP
- */
-const formatUser = (user) => ({
-  id: user._id,
-  firstName: user.firstName,
-  lastName: user.lastName,
-  email: user.email,
-  experience: user.experience,
-  objective: user.objective,
-  bodyWeightKg: user.bodyWeightKg
-});
-
-/**
  * Verifica que el usuario exista
  */
 const ensureUserExists = async (userId, errorMessage = 'User not found') => {
@@ -51,7 +38,7 @@ const listFriends = async (userId) => {
     throw new ApiError(404, 'User not found');
   }
 
-  return user.friends.map(formatUser);
+  return user.friends;
 };
 
 /**

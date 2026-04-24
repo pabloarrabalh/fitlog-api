@@ -16,27 +16,7 @@ const validateObjectId = (id) => {
  */
 const PUBLIC_USER_FIELDS = 'username firstName lastName email profileCompleted role experience objective bodyWeightKg friends createdAt updatedAt';
 
-/**
- * Formatea un usuario para respuesta HTTP (sin password)
- */
-const formatUser = (user) => {
-  const userObj = user.toJSON ? user.toJSON() : user;
-  return {
-    id: userObj._id,
-    username: userObj.username,
-    firstName: userObj.firstName,
-    lastName: userObj.lastName,
-    email: userObj.email,
-    profileCompleted: userObj.profileCompleted,
-    role: userObj.role,
-    experience: userObj.experience,
-    objective: userObj.objective,
-    bodyWeightKg: userObj.bodyWeightKg,
-    friends: userObj.friends,
-    createdAt: userObj.createdAt,
-    updatedAt: userObj.updatedAt
-  };
-};
+
 
 /**
  * Lista todos los usuarios (información pública)
@@ -47,7 +27,7 @@ const listUsers = async () => {
     .sort({ createdAt: -1 })
     .select(PUBLIC_USER_FIELDS);
 
-  return users.map(formatUser);
+  return users;
 };
 
 /**
@@ -73,7 +53,7 @@ const getUserById = async (userId, currentUserId, currentUserFriends = []) => {
     throw new ApiError(403, 'You can only view your own profile or friends profiles');
   }
 
-  return formatUser(user);
+  return user;
 };
 
 /**
@@ -88,7 +68,7 @@ const getMe = async (userId) => {
     throw new ApiError(404, 'User not found');
   }
 
-  return formatUser(user);
+  return user;
 };
 
 /**
@@ -120,7 +100,7 @@ const updateMe = async (userId, cleanData) => {
   await user.save();
 
   // 5. Devolvemos el usuario limpio usando el formato
-  return formatUser(user);
+  return user;
 };
 
 /**
@@ -136,7 +116,7 @@ const deleteMe = async (userId) => {
     throw new ApiError(404, 'User not found');
   }
 
-  return formatUser(user);
+  return user;
 };
 
 module.exports = {
