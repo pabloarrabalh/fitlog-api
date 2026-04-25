@@ -51,6 +51,7 @@ export default function SessionsPage() {
 
   const [startMode, setStartMode] = useState('empty');
   const [selectedRoutineId, setSelectedRoutineId] = useState('');
+  const [sessionName, setSessionName] = useState('');
   const [newExerciseId, setNewExerciseId] = useState('');
 
   const [activeSession, setActiveSession] = useState(null);
@@ -176,7 +177,7 @@ export default function SessionsPage() {
     return {
       id: getId(session),
       routineId: getId(session.routine),
-      name: session.routine?.name || 'Sesion libre',
+      name: session.name || session.routine?.name || 'Sesión libre',
       objective: session.objective || 'hypertrophy',
       startedAt: session.startedAt || new Date().toISOString(),
       entries: normalizeEntries(entries),
@@ -235,7 +236,7 @@ export default function SessionsPage() {
       const payload =
         startMode === 'routine'
           ? { routineId: selectedRoutineId }
-          : { objective: 'hypertrophy', exercises: [] };
+          : { name: sessionName, objective: 'hypertrophy', exercises: [] };
 
       const created = await createSession(payload);
       const fresh = await getSessionById(getId(created));
@@ -509,7 +510,7 @@ export default function SessionsPage() {
                 <CardBody className="flex justify-between items-start md:items-center md:flex-row flex-col gap-4">
                   <div className="flex-1">
                     <h3 className="text-lg font-semibold text-white mb-2">
-                      {(session.routine?.name || 'Sesion libre')} #{orderedSessions.length - index}
+                      {(session.name || session.routine?.name || 'Sesión libre')} #{orderedSessions.length - index}
                     </h3>
                     <div className="flex flex-wrap gap-2">
                       <Badge variant={getSessionStatusVariant(session.status)}>{session.status}</Badge>
@@ -585,6 +586,19 @@ export default function SessionsPage() {
             </button>
           </div>
 
+          {startMode === 'empty' && (
+            <div>
+              <label className="block text-xs uppercase text-gray-400 font-bold mb-2">Nombre de la sesión</label>
+              <input
+                type="text"
+                value={sessionName}
+                onChange={(e) => setSessionName(e.target.value)}
+                className="w-full bg-black border border-[#333] rounded-lg p-3 text-white text-sm outline-none focus:border-[#CCFF00]"
+                placeholder="Ej: Día de pecho y tríceps"
+              />
+            </div>
+          )}
+
           {startMode === 'routine' && (
             <div>
               <label className="block text-xs uppercase text-gray-400 font-bold mb-2">Routine</label>
@@ -610,7 +624,7 @@ export default function SessionsPage() {
             <Button
               className="flex-1"
               onClick={handleStartSession}
-              disabled={hasInProgressSession || (startMode === 'routine' && !selectedRoutineId)}
+              disabled={hasInProgressSession || (startMode === 'routine' && !selectedRoutineId) || (startMode === 'empty' && !sessionName)}
             >
               Start Workout
             </Button>
@@ -781,7 +795,7 @@ export default function SessionsPage() {
       <Modal
         isOpen={sessionDetailsModalOpen}
         onClose={() => setSessionDetailsModalOpen(false)}
-        title={sessionDetails?.routine?.name || 'Detalles del entreno'}
+        title={sessionDetails?.name || sessionDetails?.routine?.name || 'Detalles del entreno'}
         size="lg"
       >
         {!sessionDetails ? null : (

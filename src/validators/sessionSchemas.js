@@ -17,6 +17,7 @@ const adHocExerciseSchema = z
   });
 
 const startSessionSchema = z.object({
+  name: z.string().trim().min(2).max(100).optional(),
   routineId: z.string().optional(),
   objective: z.enum(['strength', 'hypertrophy', 'endurance', 'recomposition']).optional(),
   notes: z.string().max(500).optional(),

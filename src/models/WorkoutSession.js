@@ -127,6 +127,11 @@ const workoutSessionSchema = new mongoose.Schema(
       required: true,
       index: true
     },
+    name: {
+      type: String,
+      trim: true,
+      maxlength: 100
+    },
     routine: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Routine',

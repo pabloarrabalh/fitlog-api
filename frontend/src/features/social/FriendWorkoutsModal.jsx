@@ -41,13 +41,13 @@ export default function FriendWorkoutsModal({ isOpen, onClose, friend, fetchWork
             {workouts.map((workout, idx) => (
               <div key={workout._id || idx} className="bg-[#1E1E1E] p-4 rounded border border-[#333] flex justify-between items-center">
                 <div>
-                  <h4 className="text-white font-medium">{workout.name || 'Untitled Workout'}</h4>
+                  <h4 className="text-white font-medium">{workout.name || workout.routine?.name || 'Untitled Workout'}</h4>
                   <p className="text-xs text-gray-400 mt-1">
-                    {workout.date ? new Date(workout.date).toLocaleDateString() : 'No date'}
+                    {workout.startedAt ? new Date(workout.startedAt).toLocaleDateString() : 'No date'}
                   </p>
                 </div>
                 <span className="bg-purple-900/30 text-purple-300 text-xs px-2 py-1 rounded">
-                  {workout.exercises?.length || 0} exercises
+                  {workout.entries?.length || 0} exercises
                 </span>
               </div>
             ))}

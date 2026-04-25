@@ -72,8 +72,9 @@ const calculateSessionVolume = (entries) => {
  * @returns {Object} Sesión creada
  */
 const createSession = async (cleanData, userId) => {
-  const { routineId, objective, notes, exercises } = cleanData;
+  const { routineId, name, objective, notes, exercises } = cleanData;
   let sessionObjective = objective || 'hypertrophy';
+  let sessionName = name;
   let entries = exercises || [];
 
   // Si se proporciona routineId, obtener ejercicios de la rutina
@@ -90,6 +91,7 @@ const createSession = async (cleanData, userId) => {
     }
 
     sessionObjective = objective || routine.objective || 'hypertrophy';
+    sessionName = name || routine.name;
     entries = transformRoutineExercisesToEntries(routine.exercises);
   } else if (entries.length > 0) {
     // Usar ejercicios ad-hoc proporcionados
@@ -100,10 +102,10 @@ const createSession = async (cleanData, userId) => {
   const session = await WorkoutSession.create({
     user: userId,
     routine: routineId || null,
+    name: sessionName,
     objective: sessionObjective,
     notes: notes || '',
-    entries,
-    status: 'in_progress'
+    entries
   });
 
   return session;
@@ -254,7 +256,7 @@ const completeSession = async (sessionId, cleanData, userId) => {
 };
 
 /**
- * Cancela una sesión activa 
+ * Cancela una sesión activa
  * @param {string} sessionId - ID de la sesión
  * @param {string} userId - ID del usuario
  * @returns {Object} Sesión cancelada
