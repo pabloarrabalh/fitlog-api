@@ -1,6 +1,6 @@
 const asyncHandler = require('../utils/asyncHandler');
 const socialService = require('../services/socialService');
-const { friendIdSchema } = require('../validators/socialSchemas');
+const { friendIdSchema, friendUsernameSchema } = require('../validators/socialSchemas');
 
 const listFriends = asyncHandler(async (req, res) => {
   const friends = await socialService.listFriends(req.user._id);
@@ -12,12 +12,9 @@ const listFriends = asyncHandler(async (req, res) => {
 });
 
 const addFriend = asyncHandler(async (req, res) => {
-  const { friendId } = req.params;
-
-  // Validar friendId con Zod
-  const cleanData = friendIdSchema.parse({ friendId });
-
-  const result = await socialService.addFriend(req.user._id, cleanData.friendId);
+  const { friendUsername } = req.params;
+  const cleanData = friendUsernameSchema.parse({ friendUsername });
+  const result = await socialService.addFriend(req.user._id, cleanData.friendUsername);
 
   res.status(200).json({
     success: true,

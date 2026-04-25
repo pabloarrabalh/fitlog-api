@@ -7,7 +7,7 @@ const router = express.Router();
 router.use(authMiddleware);
 
 router.get('/friends', socialController.listFriends);
-router.post('/friends/:friendId', socialController.addFriend);
+router.post('/friends/:friendUsername', socialController.addFriend);
 router.delete('/friends/:friendId', socialController.removeFriend);
 router.get('/friends/:friendId/workouts', socialController.getFriendWorkouts);
 

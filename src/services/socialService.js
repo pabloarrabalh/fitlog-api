@@ -31,7 +31,7 @@ const ensureUserExists = async (userId, errorMessage = 'User not found') => {
 const listFriends = async (userId) => {
   const user = await User.findById(userId).populate(
     'friends',
-    'firstName lastName email experience objective bodyWeightKg'
+    'firstName lastName email username experience objective bodyWeightKg'
   );
 
   if (!user) {
@@ -44,26 +44,24 @@ const listFriends = async (userId) => {
 /**
  * Agrega un amigo (relación bidireccional - operación atómica)
  * @param {string} userId - ID del usuario actual
- * @param {string} friendId - ID del usuario a agregar como amigo
+ * @param {string} friendUsername - Nombre de usuario del amigo a agregar
  * @returns {Object} { friendId }
  */
-const addFriend = async (userId, friendId) => {
-  validateObjectId(friendId);
+const addFriend = async (userId, friendUsername) => {
+  // Find friend by username
+  const friend = await User.findOne({ username: friendUsername });
+  if (!friend) {
+    throw new ApiError(404, 'Friend not found');
+  }
+  const friendId = friend._id;
 
-  // Prevenir auto-amistad
   if (String(friendId) === String(userId)) {
     throw new ApiError(400, 'You cannot add yourself as a friend');
   }
 
-  // Verificar que ambos usuarios existan
-  const [currentUser, friend] = await Promise.all([
-    ensureUserExists(userId, 'User not found'),
-    ensureUserExists(friendId, 'Friend not found')
-  ]);
+  const currentUser = await ensureUserExists(userId, 'User not found');
 
-  // Operaciones atómicas: Agregar friendId a currentUser.friends
-  // y currentUser._id a friend.friends (bidireccional)
-  // Usar $addToSet para evitar duplicados (idempotente)
+
   await Promise.all([
     User.findByIdAndUpdate(
       userId,
@@ -88,10 +86,6 @@ const addFriend = async (userId, friendId) => {
  */
 const removeFriend = async (userId, friendId) => {
   validateObjectId(friendId);
-
-  // Operaciones atómicas: Eliminar friendId de currentUser.friends
-  // y currentUser._id de friend.friends (bidireccional)
-  // Usar $pull para eliminar
   await Promise.all([
     User.findByIdAndUpdate(
       userId,
