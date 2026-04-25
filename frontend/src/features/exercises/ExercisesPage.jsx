@@ -6,16 +6,16 @@ import ExerciseBrowseSection from './ExerciseBrowseSection';
 import ExerciseMySection from './ExerciseMySection';
 import { useExercises, useMyExercises } from '../../hooks/useExercises';
 import { useToast } from '../../context/ToastContext';
+import { useAuth } from '../../context/AuthContext';
+import { useAdminExercises } from '../../hooks/useAdminExercises';
+import ExercisePendingSection from './ExercisesPendingSection';
 
-/**
- * Exercises Page - Main component for exercise management
- * Tabs: Browse (public library) | My Exercises (user's CRUD)
- */
 export default function ExercisesPage() {
   const [activeTab, setActiveTab] = useState('browse');
   const [modalOpen, setModalOpen] = useState(false);
   const [editingExercise, setEditingExercise] = useState(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState(null);
+  const { user } = useAuth();
 
   // Browse exercises
   const {
@@ -35,7 +35,13 @@ export default function ExercisesPage() {
     updateExercise,
     deleteExercise,
   } = useMyExercises();
-
+  const {
+    pendingExercises,
+    loading: pendingLoading,
+    operationLoading: adminOpLoading,
+    approveExercise,
+    rejectExercise
+  } = useAdminExercises();
   const { success, error } = useToast();
 
   // Form handlers
@@ -91,8 +97,7 @@ export default function ExercisesPage() {
     setModalOpen(false);
     setEditingExercise(null);
   };
-
-  return (
+return (
     <MainLayout>
       <div className="space-y-6">
         {/* Header with title and create button */}
@@ -112,10 +117,10 @@ export default function ExercisesPage() {
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-4 border-b border-[#333]">
+        <div className="flex gap-4 border-b border-[#333] overflow-x-auto">
           <button
             onClick={() => setActiveTab('browse')}
-            className={`px-4 py-2 font-medium transition-colors ${
+            className={`px-4 py-2 font-medium transition-colors whitespace-nowrap ${
               activeTab === 'browse'
                 ? 'text-[#CCFF00] border-b-2 border-[#CCFF00]'
                 : 'text-gray-400 hover:text-white'
@@ -125,7 +130,7 @@ export default function ExercisesPage() {
           </button>
           <button
             onClick={() => setActiveTab('mine')}
-            className={`px-4 py-2 font-medium transition-colors ${
+            className={`px-4 py-2 font-medium transition-colors whitespace-nowrap ${
               activeTab === 'mine'
                 ? 'text-[#CCFF00] border-b-2 border-[#CCFF00]'
                 : 'text-gray-400 hover:text-white'
@@ -133,6 +138,25 @@ export default function ExercisesPage() {
           >
             📝 My Exercises
           </button>
+
+          {/* Pestaña de Admin */}
+          {user?.role === 'admin' && (
+            <button
+              onClick={() => setActiveTab('pending')}
+              className={`px-4 py-2 font-medium transition-colors whitespace-nowrap flex items-center gap-2 ${
+                activeTab === 'pending'
+                  ? 'text-[#CCFF00] border-b-2 border-[#CCFF00]'
+                  : 'text-gray-400 hover:text-white'
+              }`}
+            >
+              🛡️ Pending Approvals
+              {pendingExercises?.length > 0 && (
+                <span className="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">
+                  {pendingExercises.length}
+                </span>
+              )}
+            </button>
+          )}
         </div>
 
         {/* Browse Section */}
@@ -154,6 +178,17 @@ export default function ExercisesPage() {
             operationLoading={operationLoading}
             onEdit={handleEditExercise}
             onDelete={(id) => setDeleteConfirmId(id)}
+          />
+        )}
+
+        {/* Admin Pending Section */}
+        {activeTab === 'pending' && user?.role === 'admin' && (
+          <ExercisePendingSection
+            exercises={pendingExercises}
+            loading={pendingLoading}
+            operationLoading={adminOpLoading}
+            onApprove={approveExercise}
+            onReject={rejectExercise}
           />
         )}
       </div>
