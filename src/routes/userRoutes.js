@@ -8,6 +8,7 @@ const router = express.Router();
 
 router.use(authMiddleware);
 
+router.get('/me/dashboard', userController.getDashboardStats);
 router.get('/me', userController.getMe);
 router.patch('/me', validate(updateMeSchema), userController.updateMe);
 router.delete('/me', userController.deleteMe);

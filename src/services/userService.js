@@ -78,28 +78,19 @@ const getMe = async (userId) => {
  * @returns {Object} Usuario actualizado
  */
 const updateMe = async (userId, cleanData) => {
-  // 1. Buscamos al usuario actual
   const user = await User.findById(userId);
 
   if (!user) {
     throw new ApiError(404, 'User not found');
   }
-
-  // 2. Mezclamos los datos antiguos con los nuevos que vienen en cleanData
   Object.assign(user, cleanData);
-
-  // 3. Ahora SÍ calculamos profileCompleted basándonos en el objeto completo y actualizado
   user.profileCompleted = Boolean(
     user.bodyWeightKg !== null &&
     user.bodyWeightKg !== undefined &&
     user.experience &&
     user.objective
   );
-
-  // 4. Guardamos (esto disparará el hook pre('save') si hay cambio de contraseña)
   await user.save();
-
-  // 5. Devolvemos el usuario limpio usando el formato
   return user;
 };
 
@@ -119,10 +110,29 @@ const deleteMe = async (userId) => {
   return user;
 };
 
+const getDashboardStats = async (userId) => {
+  const user = await User.findById(userId)
+    .populate('totalExercises')
+    .populate('activeRoutines')
+    .populate('sessionsCompleted');
+
+  if (!user) {
+    throw new ApiError(404, 'User not found');
+  }
+  const userObject = user.toObject();
+  return {
+    totalExercises: userObject.totalExercises,
+    activeRoutines: userObject.activeRoutines,
+    sessionsCompleted: userObject.sessionsCompleted,
+    friends: userObject.friendsCount
+  };
+};
+
 module.exports = {
   listUsers,
   getUserById,
   getMe,
   updateMe,
-  deleteMe
+  deleteMe,
+  getDashboardStats
 };

@@ -85,10 +85,37 @@ const userSchema = new mongoose.Schema(
         delete ret.__v;
         delete ret.password;
         return ret;
-      },
+      }
     },
+    toObject: { virtuals: true }
   }
 );
+
+userSchema.virtual('totalExercises', {
+  ref: 'Exercise',
+  localField: '_id',
+  foreignField: 'createdBy',
+  count: true
+});
+
+userSchema.virtual('activeRoutines', {
+  ref: 'Routine',
+  localField: '_id',
+  foreignField: 'user',
+  count: true
+});
+
+userSchema.virtual('sessionsCompleted', {
+  ref: 'WorkoutSession',
+  localField: '_id',
+  foreignField: 'user',
+  count: true,
+  match: { status: 'completed' }
+});
+
+userSchema.virtual('friendsCount').get(function () {
+  return this.friends ? this.friends.length : 0;
+});
 
 /**
  * Encripta la contraseña antes de guardar (insert o update)

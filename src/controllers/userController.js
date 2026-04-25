@@ -59,10 +59,19 @@ const deleteMe = asyncHandler(async (req, res) => {
   });
 });
 
+const getDashboardStats = asyncHandler(async (req, res) => {
+  const stats = await userService.getDashboardStats(req.user._id);
+  res.status(200).json({
+    success: true,
+    data: stats
+  });
+});
+
 module.exports = {
   listUsers,
   getUserById,
   getMe,
   updateMe,
-  deleteMe
+  deleteMe,
+  getDashboardStats
 };
