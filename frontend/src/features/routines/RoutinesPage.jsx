@@ -21,11 +21,13 @@ export default function RoutinesPage() {
 
   const getEntityId = (entity) => {
     if (!entity) return undefined;
+    if (typeof entity === 'string') return entity;
     return entity._id || entity.id;
   };
 
   const getExerciseRefId = (exerciseRef) => {
     if (!exerciseRef) return undefined;
+    if (typeof exerciseRef === 'string') return exerciseRef;
     return exerciseRef._id || exerciseRef.id;
   };
   const reindexExercises = (items = []) =>
@@ -286,7 +288,7 @@ export default function RoutinesPage() {
                       </div>
                     </div>
 
-¡                    <button 
+                    <button 
                       onClick={() => handleRemoveExercise(index)}
                       className="text-gray-500 hover:text-red-500 transition-colors ml-1"
                     >
@@ -335,3 +337,4 @@ export default function RoutinesPage() {
     </MainLayout>
   );
 }
+
