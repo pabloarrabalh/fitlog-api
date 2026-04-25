@@ -77,13 +77,37 @@ export default function RegisterPage() {
   ];
 
   const handleRegister = async (formData) => {
-    setLoading(true);
     try {
-      await register(formData);
+      const dataToSend = {};
+      Object.keys(formData).forEach((key) => {
+        if (formData[key] !== undefined && formData[key] !== null && formData[key].toString().trim() !== '') {
+          dataToSend[key] = formData[key];
+        }
+      });
+      if (dataToSend.password && dataToSend.password.length < 5) {
+        errorToast('Password must be at least 5 characters long');
+        return;
+      }
+      if (dataToSend.bodyWeightKg) {
+        const parsedWeight = Number(dataToSend.bodyWeightKg);
+        if (isNaN(parsedWeight) || parsedWeight < 30 || parsedWeight > 250) {
+          errorToast('Weight must be a realistic value between 30kg and 250kg');
+          return;
+        }
+        dataToSend.bodyWeightKg = parsedWeight; // Send as an actual Number
+      }
+
+      setLoading(true);
+      await register(dataToSend);
       successToast('Account created successfully!');
       navigate('/');
     } catch (err) {
-      errorToast(err.response?.data?.message || 'Registration failed');
+      console.error('Registration error:', err.response?.data || err.message);
+      const errorMessage = err.response?.data?.details?.[0]?.message
+        || err.response?.data?.message
+        || 'Registration failed';
+
+      errorToast(errorMessage);
     } finally {
       setLoading(false);
     }

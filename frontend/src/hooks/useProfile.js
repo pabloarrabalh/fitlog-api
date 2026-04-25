@@ -10,9 +10,8 @@ export const useProfile = () => {
 
   const updateProfile = async (userData) => {
     const result = await execute(() =>
-      apiClient.put('/users/me', userData)
+      apiClient.patch('/users/me', userData)
     );
-    // res.data.data contains the updated user profile
     const updatedProfile = result.data.data;
     setProfile(updatedProfile);
     return updatedProfile;

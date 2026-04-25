@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { useApiCall } from './useApiCall';
 import apiClient from '../services/api';
 import { useToast } from '../context/ToastContext';
+import { useAuth } from '../context/AuthContext';
 
 export const useAdminExercises = () => {
   const [pendingExercises, setPendingExercises] = useState([]);
@@ -13,27 +14,29 @@ export const useAdminExercises = () => {
 
   const { execute } = useApiCall();
   const { error: errorToast, success: successToast } = useToast();
+  const { user } = useAuth(); // 2. Sacamos al usuario logueado
 
   const fetchPendingExercises = useCallback(async () => {
+    if (user?.role !== 'admin') return;
+
     setLoading(true);
     try {
       const result = await execute(() => apiClient.get('/exercises/pending'));
       setPendingExercises(result.data.data || []);
     } catch (err) {
       errorToast('Failed to fetch pending exercises');
+      console.error('Error fetching pending exercises:', err.response?.data || err.message);
     } finally {
       setLoading(false);
     }
-  }, [execute, errorToast]);
+  }, [execute, errorToast, user?.role]);
 
   const approveExercise = useCallback(async (id) => {
     setOperationLoading(prev => ({ ...prev, approve: { ...prev.approve, [id]: true } }));
     try {
       await execute(() => apiClient.patch(`/exercises/${id}/approve`));
-
-      // Magia UI: Lo quitamos de la lista al instante
       setPendingExercises(prev => prev.filter(e => (e._id || e.id) !== id));
-      successToast('✅ Exercise approved and published!');
+      successToast('Exercise approved and published!');
     } catch (err) {
       errorToast(err.response?.data?.message || 'Failed to approve exercise');
     } finally {
@@ -45,10 +48,8 @@ export const useAdminExercises = () => {
     setOperationLoading(prev => ({ ...prev, reject: { ...prev.reject, [id]: true } }));
     try {
       await execute(() => apiClient.patch(`/exercises/${id}/reject`));
-
-      // Magia UI: Lo quitamos de la lista al instante
       setPendingExercises(prev => prev.filter(e => (e._id || e.id) !== id));
-      successToast('❌ Exercise rejected');
+      successToast('Exercise rejected');
     } catch (err) {
       errorToast(err.response?.data?.message || 'Failed to reject exercise');
     } finally {
@@ -57,8 +58,10 @@ export const useAdminExercises = () => {
   }, [execute, errorToast, successToast]);
 
   useEffect(() => {
-    fetchPendingExercises();
-  }, [fetchPendingExercises]);
+    if (user?.role === 'admin') {
+      fetchPendingExercises();
+    }
+  }, [user?.role, fetchPendingExercises]);
 
   return {
     pendingExercises,
