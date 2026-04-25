@@ -27,18 +27,18 @@ export const useRoutines = () => {
 
   const updateRoutine = async (routineId, routineData) => {
     const result = await execute(() =>
-      apiClient.put(`/routines/${routineId}`, routineData)
+      apiClient.patch(`/routines/${routineId}`, routineData)
     );
     const updatedRoutine = result.data.data;
     setRoutines((prev) =>
-      prev.map((r) => (r._id === routineId ? updatedRoutine : r))
+      prev.map((r) => ((r._id || r.id) === routineId ? updatedRoutine : r))
     );
     return updatedRoutine;
   };
 
   const deleteRoutine = async (routineId) => {
     await execute(() => apiClient.delete(`/routines/${routineId}`));
-    setRoutines((prev) => prev.filter((r) => r._id !== routineId));
+    setRoutines((prev) => prev.filter((r) => (r._id || r.id) !== routineId));
   };
 
   const getRoutineById = async (routineId) => {

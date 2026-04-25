@@ -80,18 +80,21 @@ const getRoutineById = async (routineId, userId) => {
  * @returns {Object} Rutina actualizada
  */
 const updateRoutine = async (routineId, cleanData, userId) => {
-    validateObjectId(routineId);
-    const updatedRoutine = await Routine.findOneAndUpdate(
-        { _id: routineId, user: userId },
-        { ...cleanData },
-        { new: true, runValidators: true }
-    );
+  validateObjectId(routineId);
+  const updatedRoutine = await Routine.findOneAndUpdate(
+    { _id: routineId, user: userId },
+    { ...cleanData },
+    { new: true, runValidators: true }
+  ).populate(
+    'exercises.exercise',
+    'name primaryMuscles secondaryMuscles equipment movementPattern'
+  );
 
-    if (!updatedRoutine) {
+  if (!updatedRoutine) {
     throw new ApiError(404, 'Routine not found or you do not have permissions');
-    }
+  }
 
-    return updatedRoutine;
+  return updatedRoutine;
 };
 /**
  * Elimina una rutina
