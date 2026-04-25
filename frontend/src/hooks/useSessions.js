@@ -1,20 +1,21 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useApiCall } from './useApiCall';
 import apiClient from '../services/api';
 
 export const useSessions = () => {
   const [sessions, setSession] = useState([]);
   const { loading, error, execute } = useApiCall();
+  const getSessionId = (session) => session?._id || session?.id;
 
-  const fetchSessions = async () => {
+  const fetchSessions = useCallback(async () => {
     const result = await execute(() => apiClient.get('/sessions'));
     // res.data.data contains the actual array of sessions
     setSession(result.data.data || []);
-  };
+  }, [execute]);
 
   useEffect(() => {
     fetchSessions();
-  }, []);
+  }, [fetchSessions]);
 
   const createSession = async (sessionData) => {
     const result = await execute(() =>
@@ -27,11 +28,11 @@ export const useSessions = () => {
 
   const updateSession = async (sessionId, sessionData) => {
     const result = await execute(() =>
-      apiClient.put(`/sessions/${sessionId}`, sessionData)
+      apiClient.patch(`/sessions/${sessionId}`, sessionData)
     );
     const updatedSession = result.data.data;
     setSession((prev) =>
-      prev.map((s) => (s._id === sessionId ? updatedSession : s))
+      prev.map((s) => (getSessionId(s) === sessionId ? updatedSession : s))
     );
     return updatedSession;
   };
@@ -45,18 +46,23 @@ export const useSessions = () => {
 
   const completeSession = async (sessionId, data) => {
     const result = await execute(() =>
-      apiClient.put(`/sessions/${sessionId}/complete`, data)
+      apiClient.post(`/sessions/${sessionId}/complete`, data)
     );
     const completedSession = result.data.data;
     setSession((prev) =>
-      prev.map((s) => (s._id === sessionId ? completedSession : s))
+      prev.map((s) => (getSessionId(s) === sessionId ? completedSession : s))
     );
     return completedSession;
   };
 
   const deleteSession = async (sessionId) => {
     await execute(() => apiClient.delete(`/sessions/${sessionId}`));
-    setSession((prev) => prev.filter((s) => s._id !== sessionId));
+    setSession((prev) => prev.filter((s) => getSessionId(s) !== sessionId));
+  };
+
+  const cancelSession = async (sessionId) => {
+    await execute(() => apiClient.post(`/sessions/${sessionId}/cancel`));
+    setSession((prev) => prev.filter((s) => getSessionId(s) !== sessionId));
   };
 
   const getSessionById = async (sessionId) => {
@@ -73,6 +79,7 @@ export const useSessions = () => {
     addSetToEntry,
     completeSession,
     deleteSession,
+    cancelSession,
     getSessionById,
     refetch: fetchSessions,
   };

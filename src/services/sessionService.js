@@ -178,8 +178,12 @@ const updateSession = async (sessionId, cleanData, userId) => {
  */
 const deleteSession = async (sessionId, userId) => {
   validateObjectId(sessionId);
+  const ownedSession = await checkSessionOwnership(sessionId, userId);
 
-  // Operación atómica: eliminar solo basado en { _id, user }
+  if (ownedSession.status === 'in_progress') {
+    throw new ApiError(400, 'Active sessions cannot be deleted');
+  }
+
   const session = await WorkoutSession.findOneAndDelete({
     _id: sessionId,
     user: userId
@@ -249,6 +253,33 @@ const completeSession = async (sessionId, cleanData, userId) => {
   return completedSession;
 };
 
+/**
+ * Cancela una sesión activa 
+ * @param {string} sessionId - ID de la sesión
+ * @param {string} userId - ID del usuario
+ * @returns {Object} Sesión cancelada
+ */
+const cancelSession = async (sessionId, userId) => {
+  validateObjectId(sessionId);
+  const ownedSession = await checkSessionOwnership(sessionId, userId);
+
+  if (ownedSession.status !== 'in_progress') {
+    throw new ApiError(400, 'Only active sessions can be canceled');
+  }
+
+  const session = await WorkoutSession.findOneAndDelete({
+    _id: sessionId,
+    user: userId,
+    status: 'in_progress'
+  });
+
+  if (!session) {
+    throw new ApiError(404, 'Session not found');
+  }
+
+  return session;
+};
+
 module.exports = {
   createSession,
   listSessions,
@@ -256,5 +287,7 @@ module.exports = {
   updateSession,
   deleteSession,
   addSetToEntry,
-  completeSession
+  completeSession,
+  cancelSession
 };
+

@@ -92,6 +92,17 @@ const completeSession = asyncHandler(async (req, res) => {
   });
 });
 
+const cancelSession = asyncHandler(async (req, res) => {
+  const { sessionId } = req.params;
+
+  const session = await sessionService.cancelSession(sessionId, req.user._id);
+
+  res.status(200).json({
+    success: true,
+    data: session
+  });
+});
+
 module.exports = {
   createSession,
   listSessions,
@@ -99,5 +110,6 @@ module.exports = {
   updateSession,
   deleteSession,
   addSetToEntry,
-  completeSession
+  completeSession,
+  cancelSession
 };

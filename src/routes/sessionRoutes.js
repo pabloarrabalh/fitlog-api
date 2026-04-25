@@ -13,6 +13,7 @@ router.get('/', sessionController.listSessions);
 router.get('/:sessionId', sessionController.getSessionById);
 router.patch('/:sessionId', sessionController.updateSession);
 router.delete('/:sessionId', sessionController.deleteSession);
+router.post('/:sessionId/cancel', sessionController.cancelSession);
 router.post('/:sessionId/entries/:entryId/sets', validate(addSetSchema), sessionController.addSetToEntry);
 router.post('/:sessionId/complete', validate(completeSessionSchema), sessionController.completeSession);
 
