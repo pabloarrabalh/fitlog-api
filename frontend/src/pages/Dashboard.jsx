@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import axiosInstance from '../api/axios';
+import apiClient from '../services/api';
 
 export default function Dashboard() {
   const { user, logout } = useAuth();
@@ -12,7 +12,8 @@ export default function Dashboard() {
     setLoading(true);
     setError('');
     try {
-      const res = await axiosInstance.get('/social/friends');
+      const res = await apiClient.get('/social/friends');
+      // res.data.data contains the actual array of friends
       setFriends(res.data.data);
     } catch (err) {
       const message = err.response?.data?.message || 'Error al obtener amigos';
@@ -25,7 +26,7 @@ export default function Dashboard() {
   return (
     <main>
       <h1>Dashboard</h1>
-      <p>{user ? `Bienvenido, ${user.name}` : 'Cargando o no autorizado'}</p>
+      <p>{user ? `Bienvenido, ${user.firstName}` : 'Cargando o no autorizado'}</p>
       <button onClick={logout}>Logout</button>
       <button onClick={handleFetchFriends} disabled={loading}>
         {loading ? 'Cargando...' : 'Obtener Amigos'}
